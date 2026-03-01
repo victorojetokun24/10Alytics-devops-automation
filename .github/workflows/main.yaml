@@ -39,8 +39,8 @@ jobs: # Define a job named 'terraform' that runs on the latest Ubuntu environmen
 
       - name: Wait for instance startup # After applying the Terraform configuration, this step waits for a specified amount of time to allow the EC2 instance and the application running on it to fully start up before performing any health checks.
         run: | # The 'echo' command is used to print a message indicating that the workflow is waiting, and the 'sleep' command is used to pause the execution for 90 seconds, giving the instance and application enough time to become responsive before the next steps are executed.
-          echo "Waiting 50s for instance and app startup..."
-          sleep 50 # This delay is crucial to ensure that the application is fully operational before the health check is performed, preventing false negatives in the health check step.
+          echo "Waiting 90s for instance and app startup..."
+          sleep 90 # This delay is crucial to ensure that the application is fully operational before the health check is performed, preventing false negatives in the health check step.
 
       - name: Fetch Public IP # This step retrieves the public IP address of the deployed EC2 instance using Terraform's output command. The retrieved IP address is then set as an output variable for use in subsequent steps, such as the health check.
         id: ec2_ip # The 'id' field allows this step to be referenced in later steps to access the output variable containing the public IP address.

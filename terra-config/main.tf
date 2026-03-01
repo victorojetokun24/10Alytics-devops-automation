@@ -70,7 +70,7 @@ resource "aws_instance" "web" {
               systemctl enable docker
               git clone https://github.com/victorojetokun24/10Alytics-devops-automation.git 
               cd nginx-node-redis/
-              docker-compose up -d --build
+              docker compose up -d --build
               EOF
 
   tags = {
