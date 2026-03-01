@@ -141,7 +141,7 @@ The compose file defines an application with four services redis, nginx, web1 an
 Note
 
     - Make sure port 6379 on the host is not being used by another container, otherwise the port should be changed.
-    - incase port 80 is assigned kindly chnage any desired port map to port 80 as seen below:
+    - if port 80 is assigned kindly chnage any desired port map to port 80 as seen below:
  ```
   nginx:
     build: ./nginx
