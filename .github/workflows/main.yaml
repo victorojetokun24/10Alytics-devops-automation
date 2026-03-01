@@ -39,7 +39,7 @@ jobs: # Define a job named 'terraform' that runs on the latest Ubuntu environmen
 
       - name: Wait for instance startup # After applying the Terraform configuration, this step waits for a specified amount of time to allow the EC2 instance and the application running on it to fully start up before performing any health checks.
         run: | # The 'echo' command is used to print a message indicating that the workflow is waiting, and the 'sleep' command is used to pause the execution for 90 seconds, giving the instance and application enough time to become responsive before the next steps are executed.
-          echo "Waiting 90s for instance and app startup..."
+          echo "Waiting 50s for instance and app startup..."
           sleep 50 # This delay is crucial to ensure that the application is fully operational before the health check is performed, preventing false negatives in the health check step.
 
       - name: Fetch Public IP # This step retrieves the public IP address of the deployed EC2 instance using Terraform's output command. The retrieved IP address is then set as an output variable for use in subsequent steps, such as the health check.
@@ -55,7 +55,7 @@ jobs: # Define a job named 'terraform' that runs on the latest Ubuntu environmen
 
       - name: Keep App Running # This step keeps the application running for a specified amount of time (5 minutes) to allow for any additional testing or interaction with the deployed application before the workflow proceeds to the teardown step. It also prints the URL where the application is accessible.
         run: | # The 'echo' command is used to print a message indicating that the workflow is keeping the application alive for 5 minutes, and it also prints the URL where the application can be accessed. The 'sleep' command then pauses the execution for 300 seconds (5 minutes), allowing time for any additional testing or interaction with the application before the workflow continues to the next step.
-          echo "⏳ Keeping app alive for 5 minutes..." # This message indicates that the workflow is intentionally keeping the application running for a short period to allow for any necessary testing or interaction.
+          echo "Keeping app alive for 5 minutes..." # This message indicates that the workflow is intentionally keeping the application running for a short period to allow for any necessary testing or interaction.
           echo "Application is running at: http://${{ steps.ec2_ip.outputs.public_ip }}" # This message provides the URL where the deployed application can be accessed, using the public IP address retrieved earlier.
           sleep 300 # This command pauses the execution of the workflow for 300 seconds (5 minutes), allowing time for any additional testing or interaction with the application before proceeding to the teardown step.
 
