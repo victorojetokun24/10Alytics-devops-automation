@@ -7,7 +7,7 @@ data "aws_vpc" "default" {
   default = true
 }
 
-# Security Group
+# Security Group for HTTP + SSH
 resource "aws_security_group" "web_sg" {
   name        = "nginx-web-sg"
   description = "Allow HTTP and SSH"
@@ -62,25 +62,23 @@ resource "aws_instance" "web" {
     #!/bin/bash
     set -e
 
-    # Install Docker, Git
+    # Install Docker and Git
     apt update -y
     apt install -y docker.io git
 
     systemctl enable docker
     systemctl start docker
 
-    # Pull project and start Docker Compose
     cd /home/ubuntu
     git clone https://github.com/victorojetokun24/10Alytics-devops-automation.git
     cd 10Alytics-devops-automation
 
-    # Wait briefly to ensure Docker is ready
-    sleep 10
-    docker compose up -d --build
+    # Build and start Docker Compose containers as root
+    sudo docker compose up -d --build
 
-    # Wait until nginx is responding on port 80
+    # Wait until nginx responds on port 80
     until curl -s http://localhost:80 > /dev/null; do
-      echo "Waiting for nginx..."
+      echo "Waiting for nginx to be ready..."
       sleep 5
     done
   EOF

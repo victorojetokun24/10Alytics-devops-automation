@@ -45,8 +45,9 @@ jobs:
       - name: Health Check App
         run: |
           PUBLIC_IP=${{ steps.ec2_ip.outputs.public_ip }}
-          echo "##### Checking app at http://$PUBLIC_IP:80"
+          echo "Checking app at http://$PUBLIC_IP:80"
 
+          # Retry loop to wait for nginx to be ready
           for i in {1..12}; do
             curl -f http://$PUBLIC_IP:80 && echo "App is responding!" && exit 0
             echo "App not responding yet, retrying in 10s..."
