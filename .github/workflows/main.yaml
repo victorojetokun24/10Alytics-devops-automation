@@ -1,63 +1,68 @@
-name: Terraform CI/CD with Auto Teardown # 
-# This workflow automates the deployment of a Terraform configuration to AWS, performs a health check on the deployed application, and ensures that all resources are destroyed after testing to prevent unnecessary costs.
-on: # Trigger the workflow on pushes and pull requests to the main branch
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+name: Terraform CI/CD with Auto Teardown
 
-jobs: # Define a job named 'terraform' that runs on the latest Ubuntu environment
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
   terraform:
     runs-on: ubuntu-latest
-    defaults: # Set the default working directory for all steps to 'terra-config'
-      run: # This ensures that all Terraform commands are executed in the correct directory where the configuration files are located.
+    defaults:
+      run:
         working-directory: terra-config
-    env: # Set environment variables for AWS credentials and region, sourced from GitHub Secrets for security
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # The AWS Access Key ID is stored securely in GitHub Secrets and accessed here to authenticate with AWS services.
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # The AWS Secret Access Key is also stored securely in GitHub Secrets and accessed here for authentication.
-      AWS_DEFAULT_REGION: us-east-1 # Set the default AWS region for all Terraform operations, ensuring that resources are created in the specified region.
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-1
 
-    steps: # Define the steps to be executed in the job
-      - name: Checkout code # This step checks out the repository code so that the workflow can access the Terraform configuration files and any other necessary files for deployment.
-        uses: actions/checkout@v3 # The 'actions/checkout' action is used to clone the repository into the runner environment, allowing subsequent steps to work with the codebase.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Setup Terraform # This step sets up the Terraform CLI in the runner environment, ensuring that the correct version of Terraform is available for the subsequent commands.
-        uses: hashicorp/setup-terraform@v3 # The 'hashicorp/setup-terraform' action is used to install Terraform, and the version can be specified if needed. This ensures that the workflow has the necessary tools to execute Terraform commands.
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init # This step initializes the Terraform working directory, which is necessary before any other Terraform commands can be run. It downloads the required provider plugins and sets up the backend if configured.
-        run: terraform init # The 'terraform init' command prepares the working directory for use with Terraform, ensuring that all necessary plugins and modules are available for the deployment process.
+      - name: Terraform Init
+        run: terraform init
 
-      - name: Terraform Validate # This step validates the Terraform configuration files to ensure that they are syntactically correct and internally consistent before attempting to apply any changes.
-        run: terraform validate # The 'terraform validate' command checks the configuration files for errors and ensures that they are well-formed, which helps catch issues early in the deployment process.
+      - name: Terraform Validate
+        run: terraform validate
 
-      - name: Terraform Plan # This step creates an execution plan for Terraform, showing what actions will be taken to achieve the desired state defined in the configuration files. The plan is saved to a file for later use in the apply step.
-        run: terraform plan -out=tfplan # The 'terraform plan' command generates an execution plan and saves it to 'tfplan', which can be used in the apply step to ensure that the exact changes planned are what gets applied.
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
 
-      - name: Terraform Apply # This step applies the Terraform plan created in the previous step, making the necessary changes to the infrastructure to match the desired state defined in the configuration files. The '-auto-approve' flag is used to skip interactive approval, allowing the workflow to run unattended.
-        run: terraform apply -auto-approve tfplan # The 'terraform apply' command executes the changes defined in the 'tfplan' file, creating or modifying resources as needed to achieve the desired state.
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
 
-      - name: Wait for instance startup # After applying the Terraform configuration, this step waits for a specified amount of time to allow the EC2 instance and the application running on it to fully start up before performing any health checks.
-        run: | # The 'echo' command is used to print a message indicating that the workflow is waiting, and the 'sleep' command is used to pause the execution for 90 seconds, giving the instance and application enough time to become responsive before the next steps are executed.
-          echo "Waiting 90s for instance and app startup..."
-          sleep 90 # This delay is crucial to ensure that the application is fully operational before the health check is performed, preventing false negatives in the health check step.
-
-      - name: Fetch Public IP # This step retrieves the public IP address of the deployed EC2 instance using Terraform's output command. The retrieved IP address is then set as an output variable for use in subsequent steps, such as the health check.
-        id: ec2_ip # The 'id' field allows this step to be referenced in later steps to access the output variable containing the public IP address.
-        run: | #  The 'terraform output -raw public_ip' command retrieves the public IP address of the EC2 instance from the Terraform state, and the result is stored in the 'PUBLIC_IP' variable. The 'echo' command then appends this value to the GitHub Actions output, making it available for use in later steps of the workflow.
-          PUBLIC_IP=$(terraform output -raw public_ip) # This command retrieves the public IP address of the EC2 instance from the Terraform state and stores it in the 'PUBLIC_IP' variable.
-          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT # This command appends the public IP address to the GitHub Actions output, allowing it to be accessed in subsequent steps using the syntax '${{ steps.ec2_ip.outputs.public_ip }}'.
-
-      - name: Health Check App # This step performs a health check on the deployed application by sending an HTTP request to the public IP address of the EC2 instance. If the application is not responding, it will print an error message and exit with a non-zero status, causing the workflow to fail.
+      - name: Fetch Public IP
+        id: ec2_ip
         run: |
-          echo "##### Checking app at http://${{ steps.ec2_ip.outputs.public_ip }}:80" # This command prints a message indicating that the workflow is checking the application at the specified URL, which includes the public IP address retrieved in the previous step.
-          curl -f http://${{ steps.ec2_ip.outputs.public_ip }}:80 || (echo "App not responding" && exit 1) # This command uses 'curl' to send an HTTP request to the application. The '-f' flag causes 'curl' to fail silently on server errors, and if the request fails, it prints an error message and exits with a non-zero status, indicating that the health check has failed.
+          PUBLIC_IP=$(terraform output -raw public_ip)
+          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
-      - name: Keep App Running # This step keeps the application running for a specified amount of time (5 minutes) to allow for any additional testing or interaction with the deployed application before the workflow proceeds to the teardown step. It also prints the URL where the application is accessible.
-        run: | # The 'echo' command is used to print a message indicating that the workflow is keeping the application alive for 5 minutes, and it also prints the URL where the application can be accessed. The 'sleep' command then pauses the execution for 300 seconds (5 minutes), allowing time for any additional testing or interaction with the application before the workflow continues to the next step.
-          echo "Keeping app alive for 5 minutes..." # This message indicates that the workflow is intentionally keeping the application running for a short period to allow for any necessary testing or interaction.
-          echo "Application is running at: http://${{ steps.ec2_ip.outputs.public_ip }}" # This message provides the URL where the deployed application can be accessed, using the public IP address retrieved earlier.
-          sleep 300 # This command pauses the execution of the workflow for 300 seconds (5 minutes), allowing time for any additional testing or interaction with the application before proceeding to the teardown step.
+      - name: Health Check App
+        run: |
+          PUBLIC_IP=${{ steps.ec2_ip.outputs.public_ip }}
+          echo "##### Checking app at http://$PUBLIC_IP:80"
 
-      - name: Terraform Destroy # This step ensures that all resources created by the Terraform configuration are destroyed after testing to prevent unnecessary costs. The 'if: always()' condition ensures that this step runs regardless of the success or failure of previous steps, guaranteeing that resources are cleaned up even if the health check fails or any other step encounters an error.
-        if: always() #  The 'if: always()' condition is crucial for ensuring that the 'terraform destroy' command is executed regardless of the outcome of previous steps in the workflow. This means that even if the health check fails or any other step encounters an error, the workflow will still attempt to destroy the resources created by Terraform, preventing unnecessary costs from lingering resources.
-        run: terraform destroy -auto-approve # The 'terraform destroy' command is used to destroy all resources defined in the Terraform configuration. The '-auto-approve' flag allows the command to run without interactive approval, ensuring that the cleanup process is automated and does not require manual intervention. This step is essential for maintaining cost efficiency by ensuring that resources are not left running after testing is complete.
+          for i in {1..12}; do
+            curl -f http://$PUBLIC_IP:80 && echo "App is responding!" && exit 0
+            echo "App not responding yet, retrying in 10s..."
+            sleep 10
+          done
+
+          echo "App did not respond after 2 minutes."
+          exit 1
+
+      - name: Keep App Running for Testing
+        run: |
+          PUBLIC_IP=${{ steps.ec2_ip.outputs.public_ip }}
+          echo "Application is running at: http://$PUBLIC_IP"
+          echo "Keeping app alive for 5 minutes..."
+          sleep 300
+
+      - name: Terraform Destroy
+        if: always()
+        run: terraform destroy -auto-approve

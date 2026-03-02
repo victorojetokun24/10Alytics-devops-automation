@@ -1,15 +1,18 @@
-# Configure the AWS provider
 provider "aws" {
   region = "us-east-1"
 }
 
-# Create a security group for the web server
+# Get default VPC
+data "aws_vpc" "default" {
+  default = true
+}
+
+# Security Group
 resource "aws_security_group" "web_sg" {
   name        = "nginx-web-sg"
-  description = "Allow HTTP inbound traffic"
+  description = "Allow HTTP and SSH"
   vpc_id      = data.aws_vpc.default.id
 
-# Allow inbound traffic on port 80 (HTTP) and port 22 (SSH)
   ingress {
     from_port   = 80
     to_port     = 80
@@ -17,7 +20,6 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-# Allow inbound traffic on port 22 (SSH) for remote access
   ingress {
     from_port   = 22
     to_port     = 22
@@ -25,7 +27,6 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-# Allow all outbound traffic
   egress {
     from_port   = 0
     to_port     = 0
@@ -34,60 +35,62 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
-# Get the default VPC
-data "aws_vpc" "default" {
-  default = true
+# Latest Ubuntu AMI
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-*-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
 }
 
-# Get the latest Ubuntu AMI
-data "aws_ami" "ubuntu" {
-    most_recent = true
-    owners = ["099720109477"]
-  
-      filter {
-        name   = "name"
-        values = ["ubuntu/images/hvm-ssd/ubuntu-*-amd64-server-*"]
-      }
-
-      filter {
-        name   = "virtualization-type"
-        values = ["hvm"]
-      }
-    }
-
-# Create an EC2 instance for the web server
+# EC2 Instance
 resource "aws_instance" "web" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t2.micro"
-  # associate_public_ip_address = true
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t2.micro"
+  associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.web_sg.id]
 
-# Use user data to install Docker, Docker Compose, Git, and set up the application
   user_data = <<-EOF
-              #!/bin/bash
-                set -e
+    #!/bin/bash
+    set -e
 
-                apt update -y
-                apt install -y docker.io git
+    # Install Docker, Git
+    apt update -y
+    apt install -y docker.io git
 
-                systemctl enable docker
-                systemctl start docker
+    systemctl enable docker
+    systemctl start docker
 
-                cd /home/ubuntu
-                git clone https://github.com/victorojetokun24/10Alytics-devops-automation.git
-                cd 10Alytics-devops-automation
+    # Pull project and start Docker Compose
+    cd /home/ubuntu
+    git clone https://github.com/victorojetokun24/10Alytics-devops-automation.git
+    cd 10Alytics-devops-automation
 
-                docker-compose up -d --build
-                 
-              EOF
+    # Wait briefly to ensure Docker is ready
+    sleep 10
+    docker compose up -d --build
+
+    # Wait until nginx is responding on port 80
+    until curl -s http://localhost:80 > /dev/null; do
+      echo "Waiting for nginx..."
+      sleep 5
+    done
+  EOF
 
   tags = {
     Name = "nginx-docker-instance"
   }
 }
 
-# Output the public IP address of the EC2 instance
+# Output public IP
 output "public_ip" {
-  value       = aws_instance.web.public_ip
+  value = aws_instance.web.public_ip
 }
-
