@@ -34,7 +34,7 @@ jobs:
         run: terraform validate # Run the terraform validate command
 
       - name: Terraform Plan # Create an execution plan to preview the changes that Terraform will make
-        run: terraform plan -out=tfplan # 
+        run: terraform plan -out=tfplan # Run the terraform plan command and save the plan to a file named tfplan for later use in the apply step
 
       - name: Terraform Apply # Apply the Terraform plan to create or update infrastructure resources
         run: terraform apply -auto-approve tfplan # Run the terraform apply command with auto-approval to skip interactive confirmation
