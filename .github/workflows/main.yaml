@@ -12,7 +12,6 @@ jobs: # Define a job named 'terraform' that runs on the latest Ubuntu environmen
     defaults: # Set the default working directory for all steps to 'terra-config'
       run: # This ensures that all Terraform commands are executed in the correct directory where the configuration files are located.
         working-directory: terra-config
-
     env: # Set environment variables for AWS credentials and region, sourced from GitHub Secrets for security
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # The AWS Access Key ID is stored securely in GitHub Secrets and accessed here to authenticate with AWS services.
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # The AWS Secret Access Key is also stored securely in GitHub Secrets and accessed here for authentication.
@@ -50,8 +49,8 @@ jobs: # Define a job named 'terraform' that runs on the latest Ubuntu environmen
 
       - name: Health Check App # This step performs a health check on the deployed application by sending an HTTP request to the public IP address of the EC2 instance. If the application is not responding, it will print an error message and exit with a non-zero status, causing the workflow to fail.
         run: |
-          echo "##### Checking app at http://${{ steps.ec2_ip.outputs.public_ip }}" # This command prints a message indicating that the workflow is checking the application at the specified URL, which includes the public IP address retrieved in the previous step.
-          curl -f http://${{ steps.ec2_ip.outputs.public_ip }} || (echo "App not responding" && exit 1) # This command uses 'curl' to send an HTTP request to the application. The '-f' flag causes 'curl' to fail silently on server errors, and if the request fails, it prints an error message and exits with a non-zero status, indicating that the health check has failed.
+          echo "##### Checking app at http://${{ steps.ec2_ip.outputs.public_ip }}:80" # This command prints a message indicating that the workflow is checking the application at the specified URL, which includes the public IP address retrieved in the previous step.
+          curl -f http://${{ steps.ec2_ip.outputs.public_ip }}:80 || (echo "App not responding" && exit 1) # This command uses 'curl' to send an HTTP request to the application. The '-f' flag causes 'curl' to fail silently on server errors, and if the request fails, it prints an error message and exits with a non-zero status, indicating that the health check has failed.
 
       - name: Keep App Running # This step keeps the application running for a specified amount of time (5 minutes) to allow for any additional testing or interaction with the deployed application before the workflow proceeds to the teardown step. It also prints the URL where the application is accessible.
         run: | # The 'echo' command is used to print a message indicating that the workflow is keeping the application alive for 5 minutes, and it also prints the URL where the application can be accessed. The 'sleep' command then pauses the execution for 300 seconds (5 minutes), allowing time for any additional testing or interaction with the application before the workflow continues to the next step.

@@ -59,7 +59,7 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "web" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
-  associate_public_ip_address = true
+  # associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.web_sg.id]
 
 # Use user data to install Docker, Docker Compose, Git, and set up the application
