@@ -65,17 +65,39 @@ resource "aws_instance" "web" {
 # Use user data to install Docker, Docker Compose, Git, and set up the application
   user_data = <<-EOF
               #!/bin/bash
+              set -e
+
+              # Update system
               apt-get update -y
-              apt-get install -y docker.io git
-              systemctl start docker
+
+              # Install prerequisites
+              apt-get install -y ca-certificates curl gnupg git
+
+              # Add Docker official GPG key
+              install -m 0755 -d /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              chmod a+r /etc/apt/keyrings/docker.gpg
+
+              # Add Docker repo
+              echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+                $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
+                > /etc/apt/sources.list.d/docker.list
+
+              # Install Docker Engine + Compose plugin
+              apt-get update -y
+              apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+              # Start and enable Docker
               systemctl enable docker
+              systemctl start docker
 
-              # Install Docker Compose plugin
-              apt-get install -y docker-compose-plugin
-
+              # Clone project
               cd /home/ubuntu
-              git clone https://github.com/victorojetokun24/10Alytics-devops-automation.git 
-              cd 10Alytics-devops-automation/
+              git clone https://github.com/victorojetokun24/10Alytics-devops-automation.git
+              cd 10Alytics-devops-automation
+
+              # Run containers
               docker compose up -d --build
               EOF
 
