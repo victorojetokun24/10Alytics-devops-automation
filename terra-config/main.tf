@@ -42,7 +42,7 @@ data "aws_vpc" "default" {
 # Get the latest Ubuntu AMI
 data "aws_ami" "ubuntu" {
     most_recent = true
-    owners = ["amazon"]
+    owners = ["099720109477"]
   
       filter {
         name   = "name"
@@ -59,15 +59,21 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "web" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
+  associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.web_sg.id]
 
 # Use user data to install Docker, Docker Compose, Git, and set up the application
   user_data = <<-EOF
               #!/bin/bash
               apt-get update -y
-              apt-get install -y docker.io docker-compose git
+              apt-get install -y docker.io git
               systemctl start docker
               systemctl enable docker
+
+              # Install Docker Compose plugin
+              apt-get install -y docker-compose-plugin
+
+              cd /home/ubuntu
               git clone https://github.com/victorojetokun24/10Alytics-devops-automation.git 
               cd 10Alytics-devops-automation/
               docker compose up -d --build
