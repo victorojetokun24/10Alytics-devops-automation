@@ -209,17 +209,17 @@ Before Terraform can communicate to AWS and spin up resources, we need to set up
 
 1. Log in to AWS account as the root user (the one you used to sign up).
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/access-0.png)
 
 2. In the AWS Management Console, navigate to IAM > Users and click on “Create User”.
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/access-1.png)
 
 Generate a username like "DevOps-Integrator" works great and click Next.
 
 On the Set Permissions page, attach the policy named AdministratorAccess.
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/access-2.png)
 
 
 ### NOTE
@@ -230,17 +230,19 @@ We’re giving full admin access here just to avoid permission issues during lea
 ### Generate Access Keys and Configure AWS CLI
 1. Go back to the IAM dashboard and click on your new user: "DevOps-Integrator".
 
+![alt text](./images/access-3.png)
+
 2. Under the Security Credentials tab, click on Create Access Key.
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/access-4.png)
 
 3. select Command Line Interface (CLI) as the use case, agree to the terms, and proceed
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/access-5.png)
 
 3. Once the keys are generated, copy the Access Key ID and Secret Access Key (Paste in a secured storage and use when demanded!).
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/access-6.png)
 
 Install AWS CLI (Ubuntu/Linux)
 For Ubuntu (amd64), install the AWS CLI by running the commands in the terminal:
@@ -271,7 +273,7 @@ It will prompt you to enter:
 
 Default output format: Enter json or yaml
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/aws-cfg.png)
 
 ## Terraform installation and Set Up 
 
@@ -320,14 +322,22 @@ Inside the terra-config/main.tf file:
 Note: Terraform handles all infrastructure creation and boots/load up the EC2 instance that runs our visitor monitor app.
 
 ### GitHub Actions Workflow
+1. Navigate to the repo settings and select "Secrets and Variables", choose "Actions and select Repository secrets
 
-1. Add the following Repository Secrets (from the IAM user that was created earlier):
+![alt text](./images/git-secrets.png)
+
+2. Add the following Repository Secrets (from the IAM user that was created earlier):
 
     - AWS_ACCESS_KEY_ID
 
     - AWS_SECRET_ACCESS_KEY 
 
-2. The .github/workflows/main.yml pipeline is triggered on pull/push requests. 
+![alt text](./images/git-secrets-1.png)
+
+
+![alt text](./images/git-secrets-2.png)
+
+3. The .github/workflows/main.yml pipeline is triggered on pull/push requests. 
 The following takes place
 
     - Checkout the repository
@@ -351,7 +361,7 @@ The following takes place
 ```
     git status
     git add terra-config/main.tf
-    git commit -m "Updated GitHub repo URL"
+    git commit -m "automation modified"
     git push origin main
 ```
 
@@ -362,7 +372,7 @@ Output:
 ![alt text](./Images/Send_HL7.png)
 
 
-3. Testing the Deployment on AWS
+4. Testing the Deployment on AWS
 Once everything is set up, it’s time to watch the result.
 
     - Navigate to GitHub Repository Dashboard
@@ -371,7 +381,7 @@ Once everything is set up, it’s time to watch the result.
 
 ![alt text](./Images/Send_HL7.png)
 
-Find your recent commit – for example:
+Find your recent commit
 
 Access the workflow run: pay attention to the terraform job executing step by step.
 
