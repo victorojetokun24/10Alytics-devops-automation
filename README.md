@@ -369,17 +369,13 @@ The push will trigger the GitHub Actions workflow automatically deploying the ap
 
 Output: 
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/actions-1.png)
 
 
 4. Testing the Deployment on AWS
 Once everything is set up, it’s time to watch the result.
 
-    - Navigate to GitHub Repository Dashboard
-
-    - Click on Actions
-
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/action-2.png)
 
 Find your recent commit
 
@@ -389,7 +385,7 @@ Wait until the workflow reaches the “Keep App Running Stage”.
 
 At this point, Terraform has already created your EC2 instance, installed Docker & Docker Compose, and run the application.
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/action-3.png)
 
 
 Click on the Public URL as seen in the logs to access the application
@@ -402,69 +398,9 @@ The visitor monitor app is now live via AWS EC2 instance.
 
 Requests are distributed between web_app_1 and web_app_2 via the Nginx load balancer
 
-![alt text](./Images/Send_HL7.png)
+![alt text](./images/action-final.png)
 
 
 4. After 5 minutes, GitHub Actions will automatically run terraform destroy to clean up resources and avoid unnecessary AWS charges 
 
-![alt text](./Images/Send_HL7.png)
-
-
-
-
-
-
-
-
-
-
-## Real-Life Scenario: Updating Your App on the Fly
-Now that our app is live, let’s simulate a real production change.
-
-Imagine your manager says:
-
-"Hey, can you update the heading from Welcome to Request Counter to Welcome to My Amazing Request Counter?"
-
-Here’s how simple it becomes with GitHub Actions + Terraform:
-
-Open the web/server.js file in your project
-
-Find the <h1> HTML tag and update it:
-
- <h1>Welcome to My Amazing Request Counter</h1>
-
- Push the changes to your repository:
-
-```
- git status
- git add web/server.js
- git commit -m "Heading Changed"
- git push origin main
-
- ```
-
-![alt text](./Images/Send_HL7.png)
-
- That’s it! GitHub Actions will pick up the changes, trigger the workflow, and within 5 minutes your updated heading will be live on the EC2 instance.
-
-![alt text](./Images/Send_HL7.png)
-
- This is the true power of CI/CD pipelines — no manual SSH into servers, no redeploying by hand. Just push your code and let Terraform + GitHub Actions handle the rest 🚀.
-
-
-🏁 Conclusion
-In this blog, we took a simple Node.js + Redis counter application and supercharged it with Nginx, Docker, Terraform, and GitHub Actions.
-
-What started as a local demo quickly transformed into a cloud-ready, automated CI/CD pipeline:
-
-🚀 Docker + Docker Compose handled local testing and containerization
-
-⚡ Terraform provisioned AWS infrastructure seamlessly
-
-🔄 GitHub Actions automated deployments and teardown, giving us a clean, cost-effective workflow
-
-🎯 And most importantly — we saw how easy it is to make real-time changes that go live with just a git push.
-
-This project proves how infrastructure as code + automation can save developers hours of repetitive work and make production-ready workflows more reliable.
-
-Thanks for following along — I hope this inspires you to build your own Terraform + GitHub Actions pipelines!
+![alt text](./images/action-destroy.png)

@@ -1,12 +1,15 @@
+# Configure the AWS provider
 provider "aws" {
   region = "us-east-1"
 }
 
+# Create a security group for the EC2 instance
 resource "aws_security_group" "web_sg" {
   name        = "nginx-web-sg"
   description = "Allow HTTP inbound traffic"
   vpc_id      = data.aws_vpc.default.id
 
+# Allow inbound traffic on port 80 (HTTP) and port 22 (SSH)
   ingress {
     from_port   = 80
     to_port     = 80
@@ -14,6 +17,7 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+# Allow inbound traffic on port 22 (SSH) for remote access
   ingress {
     from_port   = 22
     to_port     = 22
@@ -21,6 +25,7 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+# Allow all outbound traffic
   egress {
     from_port   = 0
     to_port     = 0
@@ -29,10 +34,12 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
+# Get the default VPC and the latest Ubuntu AMI
 data "aws_vpc" "default" {
   default = true
 }
 
+# Get the latest Ubuntu AMI for the specified region
 data "aws_ami" "ubuntu" {
     most_recent = true
     owners = ["amazon"]
@@ -48,6 +55,7 @@ data "aws_ami" "ubuntu" {
       }
     }
 
+# Create an EC2 instance and install Docker, Docker Compose, and Git using user data
 resource "aws_instance" "web" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
@@ -65,11 +73,13 @@ resource "aws_instance" "web" {
               docker-compose up -d --build
               EOF
 
+# Add tags to the instance
   tags = {
     Name = "nginx-docker-instance"
   }
 }
 
+# Output the public IP address of the EC2 instance
 output "public_ip" {
   value       = aws_instance.web.public_ip
 }
