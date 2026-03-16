@@ -158,7 +158,7 @@ Note
 
 output:
 
-![alt text](./Images/0.png)
+![alt text](./images/0.png)
 
 the output does the following
 
